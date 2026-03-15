@@ -9,4 +9,4 @@ Clique na seta abaixo para revelar a loadstring. Copie e cole no seu executor.
 <summary><b>CLIQUE AQUI PARA VER O SCRIPT</b></summary>
 
 ```lua
-loadstring(game:HttpGet(""))()
+loadstring(game:HttpGet("henry4663/dn-mod/blob/main/script.lua"))()
