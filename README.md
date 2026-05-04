@@ -1,4 +1,4 @@
-# ⚡ Henry Hub | MM2
+# ⚡ Henry Hub |
 
 > Status: 🟢 Undetected
 
