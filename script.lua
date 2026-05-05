@@ -1,153 +1,262 @@
+
 local player = game.Players.LocalPlayer
-local pgui = player:WaitForChild("PlayerGui")
+local playerGui = player:WaitForChild("PlayerGui")
+local UIS = game:GetService("UserInputService")
+local Stats = game:GetService("Stats")
+local RunService = game:GetService("RunService")
 
-if pgui:FindFirstChild("HenryHub_V1") then pgui.HenryHub_V1:Destroy() end
+-- Configurações
+local espSettings = {
+	murder = false,
+	sheriff = false,
+	innocent = false,
+	coins = false,
+	tracers = false
+}
 
-local ScreenGui = Instance.new("ScreenGui", pgui)
-ScreenGui.Name = "HenryHub_V1"
-ScreenGui.ResetOnSpawn = false
+local activeTracers = {} -- Tabela para gerenciar as linhas
 
--- [[ BOTÃO PARA ABRIR ]] --
-local OpenBtn = Instance.new("TextButton", ScreenGui)
-OpenBtn.Size = UDim2.new(0, 80, 0, 30)
-OpenBtn.Position = UDim2.new(0.5, -40, 0, 10)
-OpenBtn.Text = "ABRIR "
-OpenBtn.Visible = false
-OpenBtn.BackgroundColor3 = Color3.fromRGB(50, 150, 50)
-OpenBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-OpenBtn.Font = Enum.Font.SourceSansBold
-OpenBtn.Draggable = true
+-- Container Principal
+local sg = Instance.new("ScreenGui")
+sg.Name = "HenryHub_V4"
+sg.ResetOnSpawn = false
+sg.Parent = playerGui
 
--- [[ JANELA PRINCIPAL ]] --
-local MainFrame = Instance.new("Frame", ScreenGui)
-MainFrame.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
-MainFrame.Position = UDim2.new(0.3, 0, 0.2, 0)
-MainFrame.Size = UDim2.new(0, 400, 0, 350)
-MainFrame.Active = true
-MainFrame.Draggable = true
+-- Janela Principal
+local main = Instance.new("Frame")
+main.Name = "Main"
+main.Size = UDim2.new(0, 500, 0, 320)
+main.Position = UDim2.new(0.5, -250, 0.5, -160)
+main.BackgroundColor3 = Color3.fromRGB(15, 15, 15)
+main.BorderSizePixel = 0
+main.ClipsDescendants = true
+main.Parent = sg
 
-local Header = Instance.new("Frame", MainFrame)
-Header.Size = UDim2.new(1, 0, 0, 40)
-Header.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+Instance.new("UICorner", main).CornerRadius = UDim.new(0, 10)
+local stroke = Instance.new("UIStroke", main)
+stroke.Color = Color3.fromRGB(255, 0, 0)
+stroke.Thickness = 2
 
-local Title = Instance.new("TextLabel", Header)
-Title.Size = UDim2.new(1, -45, 1, 0)
-Title.Text = " HENRY HUB V1 | MM2 V1 BY HENRY"
-Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-Title.BackgroundTransparency = 1
-Title.Font = Enum.Font.SourceSansBold
-Title.TextSize = 22
-Title.TextXAlignment = Enum.TextXAlignment.Left
+-- TopBar
+local topBar = Instance.new("Frame")
+topBar.Size = UDim2.new(1, 0, 0, 40)
+topBar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+topBar.Parent = main
 
-local MinBtn = Instance.new("TextButton", Header)
-MinBtn.Size = UDim2.new(0, 40, 0, 40)
-MinBtn.Position = UDim2.new(1, -40, 0, 0)
-MinBtn.Text = "_"
-MinBtn.BackgroundColor3 = Color3.fromRGB(150, 50, 50)
-MinBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
-MinBtn.Font = Enum.Font.SourceSansBold
-MinBtn.TextSize = 25
+local title = Instance.new("TextLabel")
+title.Size = UDim2.new(1, -50, 1, 0)
+title.Position = UDim2.new(0, 15, 0, 0)
+title.BackgroundTransparency = 1
+title.Text = "HENRY HUB | MM2"
+title.TextColor3 = Color3.fromRGB(255, 255, 255)
+title.Font = Enum.Font.GothamBold
+title.TextSize = 16
+title.TextXAlignment = Enum.TextXAlignment.Left
+title.Parent = topBar
 
-MinBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = false
-    OpenBtn.Visible = true
-end)
+local minBtn = Instance.new("TextButton")
+minBtn.Size = UDim2.new(0, 35, 0, 35)
+minBtn.Position = UDim2.new(1, -40, 0, 2)
+minBtn.BackgroundTransparency = 1
+minBtn.Text = "-"
+minBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minBtn.TextSize = 30
+minBtn.Parent = topBar
 
-OpenBtn.MouseButton1Click:Connect(function()
-    MainFrame.Visible = true
-    OpenBtn.Visible = false
-end)
+-- Containers de Abas
+local tabContainer = Instance.new("Frame")
+tabContainer.Size = UDim2.new(0, 120, 1, -50)
+tabContainer.Position = UDim2.new(0, 5, 0, 45)
+tabContainer.BackgroundTransparency = 1
+tabContainer.Parent = main
+Instance.new("UIListLayout", tabContainer).Padding = UDim.new(0, 5)
 
-local Container = Instance.new("ScrollingFrame", MainFrame)
-Container.Position = UDim2.new(0, 10, 0, 50)
-Container.Size = UDim2.new(1, -20, 1, -60)
-Container.BackgroundTransparency = 1
-Container.CanvasSize = UDim2.new(0, 0, 2, 0)
-Container.ScrollBarThickness = 5
+local contentHolder = Instance.new("Frame")
+contentHolder.Size = UDim2.new(1, -140, 1, -50)
+contentHolder.Position = UDim2.new(0, 130, 0, 45)
+contentHolder.BackgroundColor3 = Color3.fromRGB(10, 10, 10)
+contentHolder.Parent = main
+Instance.new("UICorner", contentHolder)
 
-local function AddToggle(name, color, callback)
-    local btn = Instance.new("TextButton", Container)
-    btn.Size = UDim2.new(1, 0, 0, 50)
-    btn.Position = UDim2.new(0, 0, 0, (#Container:GetChildren() - 1) * 55)
-    btn.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
-    btn.Text = name .. ": OFF"
-    btn.TextColor3 = color
-    btn.Font = Enum.Font.SourceSansBold
-    btn.TextSize = 20
-    
-    local enabled = false
-    btn.MouseButton1Click:Connect(function()
-        enabled = not enabled
-        btn.Text = name .. (enabled and ": ON" or ": OFF")
-        btn.BackgroundColor3 = enabled and Color3.fromRGB(70, 110, 70) or Color3.fromRGB(40, 40, 40)
-        callback(enabled)
-    end)
+local pages = {}
+
+local function createTab(name)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(1, 0, 0, 35)
+	b.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	b.Text = name
+	b.TextColor3 = Color3.fromRGB(200, 200, 200)
+	b.Font = Enum.Font.GothamMedium
+	b.Parent = tabContainer
+	Instance.new("UICorner", b)
+
+	local p = Instance.new("ScrollingFrame")
+	p.Size = UDim2.new(1, -10, 1, -10)
+	p.Position = UDim2.new(0, 5, 0, 5)
+	p.BackgroundTransparency = 1
+	p.Visible = false
+	p.ScrollBarThickness = 0
+	p.Parent = contentHolder
+	Instance.new("UIListLayout", p).Padding = UDim.new(0, 5)
+
+	b.MouseButton1Click:Connect(function()
+		for _, pg in pairs(pages) do pg.Visible = false end
+		p.Visible = true
+	end)
+	pages[name] = p
+	return p
 end
 
--- Lógica de Highlight com PRIORIDADE
-local function ApplyESP(p, color, state)
-    if not p or not p.Character then return end
-    local char = p.Character
-    local esp = char:FindFirstChild("HenryESP")
-    
-    if state then
-        if esp then
-            -- Se a cor mudar (ex: era inocente e virou murder), atualiza a cor
-            if esp.FillColor ~= color then esp.FillColor = color end
-        else
-            local h = Instance.new("Highlight")
-            h.Name = "HenryESP"
-            h.FillColor = color
-            h.FillTransparency = 0.4
-            h.OutlineTransparency = 0
-            h.Parent = char
-        end
-    else
-        if esp then esp:Destroy() end
-    end
+local function addToggle(parent, text, key)
+	local b = Instance.new("TextButton")
+	b.Size = UDim2.new(1, 0, 0, 35)
+	b.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+	b.Text = text .. ": OFF"
+	b.TextColor3 = Color3.fromRGB(255, 50, 50)
+	b.Font = Enum.Font.GothamBold
+	b.Parent = parent
+	Instance.new("UICorner", b)
+
+	b.MouseButton1Click:Connect(function()
+		espSettings[key] = not espSettings[key]
+		local state = espSettings[key]
+		b.Text = text .. (state and ": ON" or ": OFF")
+		b.TextColor3 = state and Color3.fromRGB(50, 255, 50) or Color3.fromRGB(255, 50, 50)
+	end)
 end
 
--- [[ FUNÇÕES V1 COM PRIORIDADE ]] --
+-- Lógica de Cargos MM2
+local function getRole(p)
+	local backpack = p:FindFirstChild("Backpack")
+	local char = p.Character
+	if (backpack and backpack:FindFirstChild("Knife")) or (char and char:FindFirstChild("Knife")) then return "Murder" end
+	if (backpack and backpack:FindFirstChild("Gun")) or (char and char:FindFirstChild("Gun")) then return "Sheriff" end
+	return "Innocent"
+end
 
--- Loop Único para não bugar (Melhor performance)
+-- Função para Linhas (Tracers)
+local function manageTracer(p, state, color)
+	if state and not activeTracers[p] then
+		local line = Drawing.new("Line")
+		line.Thickness = 1.5
+		line.Transparency = 1
+		line.Color = color
+		activeTracers[p] = line
+	elseif not state and activeTracers[p] then
+		activeTracers[p]:Remove()
+		activeTracers[p] = nil
+	end
+end
+
+-- Criar Abas
+local visualPage = createTab("Visuais")
+local otherPage = createTab("Outros")
+
+addToggle(visualPage, "ESP Murder", "murder")
+addToggle(visualPage, "ESP Sheriff", "sheriff")
+addToggle(visualPage, "ESP Inocente", "innocent")
+addToggle(visualPage, "ESP Moedas", "coins")
+addToggle(visualPage, "ESP Linhas", "tracers")
+
+-- Stats (Aba Outros)
+local fpsL = Instance.new("TextLabel", otherPage)
+fpsL.Size = UDim2.new(1,0,0,30); fpsL.BackgroundTransparency = 1; fpsL.TextColor3 = Color3.new(1,1,1); fpsL.Font = Enum.Font.Code; fpsL.TextSize = 14; fpsL.TextXAlignment = 0
+local pingL = fpsL:Clone(); pingL.Parent = otherPage
+local memL = fpsL:Clone(); memL.Parent = otherPage
+
 task.spawn(function()
-    while true do
-        for _, p in pairs(game.Players:GetPlayers()) do
-            if p ~= player and p.Character then
-                local isMurder = p.Backpack:FindFirstChild("Knife") or p.Character:FindFirstChild("Knife")
-                local isSheriff = p.Backpack:FindFirstChild("Gun") or p.Character:FindFirstChild("Gun")
-                
-                if isMurder and _G.Murd then
-                    ApplyESP(p, Color3.fromRGB(255, 0, 0), true)
-                elseif isSheriff and _G.Sher then
-                    ApplyESP(p, Color3.fromRGB(0, 150, 255), true)
-                elseif _G.Inno then
-                    ApplyESP(p, Color3.fromRGB(200, 200, 200), true)
-                else
-                    ApplyESP(p, nil, false)
-                end
-            end
-        end
-        
-        -- ESP GUN DROP (Fora do loop de players)
-        if _G.GunESP then
-            local gun = workspace:FindFirstChild("GunDrop") or workspace:FindFirstChild("Gun")
-            if gun and not gun:FindFirstChild("HenryESP") then
-                local h = Instance.new("Highlight", gun)
-                h.Name = "HenryESP"
-                h.FillColor = Color3.fromRGB(0, 255, 100)
-            end
-        end
-        
-        task.wait(0.2) -- Check rápido para tirar o delay
-    end
+	while task.wait(1) do
+		fpsL.Text = "FPS: " .. math.floor(workspace:GetRealPhysicsFPS())
+		pingL.Text = "PING: " .. math.floor(Stats.Network.ServerStatsItem["Data Ping"]:GetValue()) .. "ms"
+		memL.Text = "MEMORIA: " .. math.floor(Stats:GetTotalMemoryUsageMb()) .. "MB"
+	end
 end)
 
-AddToggle("ESP MURDERER", Color3.fromRGB(255, 0, 0), function(v) _G.Murd = v end)
-AddToggle("ESP XERIFE", Color3.fromRGB(0, 150, 255), function(v) _G.Sher = v end)
-AddToggle("ESP GUN DROP", Color3.fromRGB(0, 255, 100), function(v) _G.GunESP = v end)
-AddToggle("ESP INOCENTES", Color3.fromRGB(255, 255, 255), function(v) _G.Inno = v end)
+-- LOOP PRINCIPAL (RODANDO A TODO MOMENTO)
+RunService.RenderStepped:Connect(function()
+	for _, p in pairs(game.Players:GetPlayers()) do
+		if p ~= player then
+			local char = p.Character
+			if char and char:FindFirstChild("HumanoidRootPart") then
+				local role = getRole(p)
+				local highlight = char:FindFirstChild("HenryESP")
+				
+				-- Determina se deve mostrar ESP baseado no cargo
+				local isTarget = (role == "Murder" and espSettings.murder) or 
+								 (role == "Sheriff" and espSettings.sheriff) or 
+								 (role == "Innocent" and espSettings.innocent)
+				
+				local roleColor = (role == "Murder" and Color3.new(1,0,0)) or (role == "Sheriff" and Color3.new(0,0,1)) or Color3.new(0,1,0)
 
+				if isTarget then
+					-- Criar ou atualizar Highlight
+					if not highlight then
+						highlight = Instance.new("Highlight")
+						highlight.Name = "HenryESP"
+						highlight.Parent = char
+					end
+					highlight.FillColor = roleColor
+					
+					-- Gerenciar Linhas (Tracers)
+					if espSettings.tracers then
+						manageTracer(p, true, roleColor)
+						local line = activeTracers[p]
+						local pos, onScreen = workspace.CurrentCamera:WorldToViewportPoint(char.HumanoidRootPart.Position)
+						if onScreen then
+							line.From = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
+							line.To = Vector2.new(pos.X, pos.Y)
+							line.Visible = true
+						else
+							line.Visible = false
+						end
+					else
+						manageTracer(p, false)
+					end
+				else
+					if highlight then highlight:Destroy() end
+					manageTracer(p, false)
+				end
+			else
+				manageTracer(p, false)
+			end
+		end
+	end
+	
+	-- ESP de Moedas (Otimizado)
+	if espSettings.coins then
+		local container = workspace:FindFirstChild("CoinContainer", true)
+		if container then
+			for _, c in pairs(container:GetChildren()) do
+				if c:IsA("BasePart") and not c:FindFirstChild("CoinVisual") then
+					local b = Instance.new("BoxHandleAdornment", c)
+					b.Name = "CoinVisual"; b.Adornee = c; b.AlwaysOnTop = true; b.Size = Vector3.new(2,2,2); b.Color3 = Color3.new(1,1,0); b.Transparency = 0.5
+				end
+			end
+		end
+	else
+		-- Remove visuais de moedas se desligar
+		for _, v in pairs(workspace:GetDescendants()) do
+			if v.Name == "CoinVisual" then v:Destroy() end
+		end
+	end
+end)
 
+-- Arrastar e Minimizar
+local isMin = false
+minBtn.MouseButton1Click:Connect(function()
+	isMin = not isMin
+	tabContainer.Visible = not isMin
+	contentHolder.Visible = not isMin
+	main:TweenSize(isMin and UDim2.new(0, 200, 0, 40) or UDim2.new(0, 500, 0, 320), "Out", "Quart", 0.3, true)
+	minBtn.Text = isMin and "+" or "-"
+end)
 
+local d, ds, sp
+topBar.InputBegan:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = true ds = i.Position sp = main.Position end end)
+UIS.InputChanged:Connect(function(i) if d and i.UserInputType == Enum.UserInputType.MouseMovement then 
+	local del = i.Position - ds
+	main.Position = UDim2.new(sp.X.Scale, sp.X.Offset + del.X, sp.Y.Scale, sp.Y.Offset + del.Y)
+end end)
+UIS.InputEnded:Connect(function(i) if i.UserInputType == Enum.UserInputType.MouseButton1 then d = false end end)
 
+visualPage.Visible = true
