@@ -221,25 +221,43 @@ RunService.RenderStepped:Connect(function()
 			end
 		end
 	end
-	
-	-- ESP de Moedas (Otimizado)
-	if espSettings.coins then
-		local container = workspace:FindFirstChild("CoinContainer", true)
-		if container then
-			for _, c in pairs(container:GetChildren()) do
-				if c:IsA("BasePart") and not c:FindFirstChild("CoinVisual") then
-					local b = Instance.new("BoxHandleAdornment", c)
-					b.Name = "CoinVisual"; b.Adornee = c; b.AlwaysOnTop = true; b.Size = Vector3.new(2,2,2); b.Color3 = Color3.new(1,1,0); b.Transparency = 0.5
-				end
-			end
-		end
-	else
-		-- Remove visuais de moedas se desligar
-		for _, v in pairs(workspace:GetDescendants()) do
-			if v.Name == "CoinVisual" then v:Destroy() end
-		end
-	end
-end)
+	----esp coin v2
+	-- Fora do RenderStepped, crie uma referência fixa ou use uma variável
+local coinContainer = workspace:FindFirstChild("CoinContainer", true)
+
+-- Criar uma tabela para rastrear os visuais criados
+local activeCoinVisuals = {}
+
+-- Dentro do RenderStepped, modifique a lógica das moedas:
+if espSettings.coins then
+    -- Se não achou antes, tenta achar apenas uma vez
+    if not coinContainer then
+        coinContainer = workspace:FindFirstChild("CoinContainer", true)
+    end
+    
+    if coinContainer then
+        for _, c in pairs(coinContainer:GetChildren()) do
+            if c:IsA("BasePart") and not activeCoinVisuals[c] then
+                local b = Instance.new("BoxHandleAdornment")
+                b.Name = "CoinVisual"
+                b.Adornee = c
+                b.AlwaysOnTop = true
+                b.Size = Vector3.new(2,2,2)
+                b.Color3 = Color3.new(1,1,0)
+                b.Transparency = 0.5
+                b.Parent = c
+                
+                activeCoinVisuals[c] = b
+            end
+        end
+    end
+else
+    -- Limpa de forma ultra rápida usando a tabela, sem varrer o mapa inteiro
+    for part, visual in pairs(activeCoinVisuals) do
+        if visual then visual:Destroy() end
+    end
+    table.clear(activeCoinVisuals)
+end
 
 -- Arrastar e Minimizar
 local isMin = false
